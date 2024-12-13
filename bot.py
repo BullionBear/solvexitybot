@@ -1,55 +1,62 @@
 import os
 import asyncio
+import logging
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+import cogs
+from sqlalchemy import create_engine
 
+# Load environment variables
 load_dotenv()
-TOKEN = os.getenv('BOT_TOKEN')
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+DB_URL = os.getenv('DB_URL')
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# Configure intents and bot
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="|>", intents=intents)
-"""
-allowed_channels = [1297170481031548931, 1297380883178852484]  # Replace these with your channel IDs
 
-# Check function to restrict commands to specific channels
-def is_in_allowed_channel():
-    async def predicate(ctx):
-        return ctx.channel.id in allowed_channels
-    return commands.check(predicate)
-"""
-
+# Load extensions
 async def load():
-    await bot.load_extension(f'cogs.example_cog')
-
+    await bot.add_cog(cogs.ExampleCog(bot))
+    engine = create_engine(DB_URL)
+    await bot.add_cog(cogs.SolvexityDataCog(bot, engine))
 
 @bot.event
 async def on_ready():  
-    print(f"load id --> {bot.user}")
+    logger.info(f"Bot is online as {bot.user}")
 
-@bot.command(name = "sync", description = "sync commands")
+@bot.command(name="sync", description="Sync commands")
 async def sync(ctx):
-    slash = await bot.tree.sync()
-    print(f"load {len(slash)} commands")
-    print(f"{slash}")
-    await ctx.send("synced")
+    try:
+        slash = await bot.tree.sync()
+        logger.info(f"Synced {len(slash)} commands: {slash}")
+        await ctx.send("Commands synced successfully.")
+    except Exception as e:
+        logger.error("Error syncing commands", exc_info=True)
+        await ctx.send("Failed to sync commands. Check logs for details.")
 
-
-
-
-@bot.tree.command(name = "hello", description = "Hello, world!")
-async def hello(interaction: discord.Interaction):
+@bot.tree.command(name="greet", description="Friendly greeting")
+async def greet(interaction: discord.Interaction):
     """Responds with a greeting"""
-    await interaction.response.send_message("Hello, world!")
-
-@bot.tree.command(name = "test", description = "Test, world!")
-async def test(interaction: discord.Interaction):
-    """Responds with a greeting"""
-    await interaction.response.send_message("Test, world!")
+    try:
+        await interaction.response.send_message(f"Hello, {interaction.user}!")
+        logger.info(f"Responded to /greet from {interaction.user}")
+    except Exception as e:
+        logger.error("Error handling /hello command", exc_info=True)
 
 
 async def main():
-    await load()
-    await bot.start(TOKEN)
+    try:
+        await load()
+        await bot.start(BOT_TOKEN)
+    except Exception as e:
+        logger.critical("Error starting the bot", exc_info=True)
 
-asyncio.run(main())
+# Run the bot
+if __name__ == "__main__":
+    asyncio.run(main())
