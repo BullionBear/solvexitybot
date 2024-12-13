@@ -1,14 +1,19 @@
+import discord
 from discord.ext import commands
+from discord import app_commands
 
 class ExampleCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="ping")
-    async def ping(self, ctx):
-        """Responds with 'Pong!'"""
-        await ctx.send("Pong!")
+    @commands.Cog.listener()
+    async def on_ready(self):
+        print(f"Example cog loaded")
 
-# Setup function to add this cog to the bot
-def setup(bot):
-    bot.add_cog(ExampleCog(bot))
+    @app_commands.command(name="ping", description="Replies with 'Pong!'")
+    async def ping(self,interaction: discord.Interaction):
+        """Responds with a greeting"""
+        await interaction.response.send_message("Pong!")
+
+async def setup(bot):
+    await bot.add_cog(ExampleCog(bot))
