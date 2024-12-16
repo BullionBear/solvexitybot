@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 import cogs
 from sqlalchemy import create_engine
 
+import cogs.trading_cog
+
 # Load environment variables
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
@@ -25,6 +27,8 @@ async def load():
     await bot.add_cog(cogs.ExampleCog(bot))
     engine = create_engine(DB_URL)
     await bot.add_cog(cogs.SolvexityDataCog(bot, engine))
+    await bot.add_cog(cogs.TradingCog(bot, engine))
+
 
 @bot.event
 async def on_ready():  
