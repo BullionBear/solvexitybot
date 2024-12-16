@@ -86,12 +86,13 @@ class TradingCog(commands.Cog):
                 # await interaction.response.send_message(f"Invalid API key")
                 res = await client.order_market_sell(symbol=symbol, quantity=quantity)
                 logger.info(f"Order result {res}")
+                average_price = str(Decimal(res['cummulativeQuoteQty']) / Decimal(res['executedQty'])).rstrip('0').rstrip('.')
                 description = textwrap.dedent(f"""\
                     ID: {res['orderId']}
                     Symbol: {res['symbol']}
                     Side: {res['side']}
                     Qty: {res['executedQty']}
-                    Average Price: {Decimal(res['cummulativeQuoteQty']) / Decimal(res['executedQty'])}
+                    Average Price: {average_price}
                 """)
                 embed = discord.Embed(
                     title=f"SPOT {account} Sell",
@@ -105,12 +106,13 @@ class TradingCog(commands.Cog):
                 order_id = order['orderId']
                 res = await client.futures_get_order(symbol=symbol, orderId=order_id)
                 logger.info(f"Order result {res}")
+                average_price = str(Decimal(res['avgPrice'])).rstrip('0').rstrip('.')
                 description = textwrap.dedent(f"""\
                     ID: {order_id}
                     Symbol: {res['symbol']}
                     Side: {res['side']}
                     Qty: {res['executedQty']}
-                    Average Price: {Decimal(res['avgPrice'])}
+                    Average Price: {average_price}
                 """)
                 embed = discord.Embed(
                     title=f"PERP {account} Sell",
