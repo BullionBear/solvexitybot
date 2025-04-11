@@ -2,7 +2,6 @@ python-dotenv
 discord.py
 discord-py-slash-command
 python-binance
-pandas
 psycopg2-binary
-SQLAlchemy
 tabulate
+pyyaml

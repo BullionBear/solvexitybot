@@ -5,14 +5,11 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import cogs
-from sqlalchemy import create_engine
-
-import cogs.trading_cog
+import yaml
 
 # Load environment variables
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
-DB_URL = os.getenv('DB_URL')
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -25,9 +22,12 @@ bot = commands.Bot(command_prefix="|>", intents=intents)
 # Load extensions
 async def load():
     await bot.add_cog(cogs.ExampleCog(bot))
-    engine = create_engine(DB_URL)
-    await bot.add_cog(cogs.SolvexityDataCog(bot, engine))
-    await bot.add_cog(cogs.TradingCog(bot, engine))
+    # Load Binance account details from config.yml
+    with open("config.yml", "r") as file:
+        config = yaml.safe_load(file)
+    accounts = {acc['name']: acc for acc in config['binance']}
+    await bot.add_cog(cogs.SolvexityDataCog(bot, accounts))
+    await bot.add_cog(cogs.TradingCog(bot, accounts))
 
 
 @bot.event
