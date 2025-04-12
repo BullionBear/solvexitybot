@@ -35,7 +35,7 @@ class SolvexityDataCog(commands.Cog):
                 embed = discord.Embed(
                     title=f"{account_name} Spot Balances",
                     description=description,
-                    color=discord.Color.blue()
+                    color=discord.Color.random()
                 )
                 for balance in balances:           
                     if float(balance['free']) > 0 or float(balance['locked']) > 0:
@@ -74,7 +74,6 @@ class SolvexityDataCog(commands.Cog):
                     await interaction.response.send_message(f"Error retrieving spot balance for {account['name']}: {e}")
                 else:
                     await interaction.followup.send(f"Error retrieving spot balance for {account['name']}: {e}")         
-                continue
             finally:
                 # if client exists, close the connection
                 if 'client' in locals():
@@ -83,6 +82,8 @@ class SolvexityDataCog(commands.Cog):
     @app_commands.command(name="fbalance", description="Get futures account balances")
     async def fbalance(self, interaction: discord.Interaction):
         """Responds with a position"""
+        self.is_first_msg = True
+
         for account in self.accounts:
             try:
                 account_name = account['name']
@@ -94,7 +95,7 @@ class SolvexityDataCog(commands.Cog):
                 embed = discord.Embed(
                     title=f"{account_name} Perp Balances",
                     description=description,
-                    color=discord.Color.brand_red()
+                    color=discord.Color.random()
                 )
                 for balance in account_info:
                     if decimal.Decimal(balance['balance']) > 0:
@@ -115,10 +116,18 @@ class SolvexityDataCog(commands.Cog):
                         if locked.is_zero():
                             locked = decimal.Decimal(0)
                         embed.add_field(name=asset, value=f"Free: {free}, Locked: {locked}", inline=False)
-                await interaction.response.send_message(content=None, embed=embed)
+                if self.is_first_msg:
+                    self.is_first_msg = False
+                    await interaction.response.send_message(content=None, embed=embed)
+                else:
+                    await interaction.followup.send(content=None, embed=embed)
             except Exception as e:
                 logger.error("Error handling /position command", exc_info=True)
-                await interaction.response.send_message(f"Failed to get positions: {e}")
+                if self.is_first_msg:
+                    self.is_first_msg = False
+                    await interaction.response.send_message(f"Error retrieving perp balance for {account['name']}: {e}")
+                else:
+                    await interaction.followup.send(f"Failed to get positions: {e}")
             finally:
                 # if client exists, close the connection
                 if 'client' in locals():
@@ -128,6 +137,7 @@ class SolvexityDataCog(commands.Cog):
     @app_commands.command(name="position", description="Get perp positions")
     async def position(self, interaction: discord.Interaction):
         """Responds with a position"""
+        self.is_first_msg = True
         for account in self.accounts:
             try:
                 account_name = account['name']
@@ -139,7 +149,7 @@ class SolvexityDataCog(commands.Cog):
                 embed = discord.Embed(
                     title=f"{account_name} Perp Positions",
                     description=description,
-                    color=discord.Color.brand_red()
+                    color=discord.Color.random()
                 )
                 for position in positions:
                     if decimal.Decimal(position['positionAmt']) != 0:
@@ -148,10 +158,18 @@ class SolvexityDataCog(commands.Cog):
                         entry_price = decimal.Decimal(position['entryPrice'])
                         unrealized_profit = decimal.Decimal(position['unRealizedProfit']).quantize(decimal.Decimal('0.01'))
                         embed.add_field(name=symbol, value=f"Position: {amount}, Entry Px: {entry_price}, Unrealized: {unrealized_profit}", inline=False)
-                await interaction.response.send_message(content=None, embed=embed)
+                if self.is_first_msg:
+                    self.is_first_msg = False
+                    await interaction.response.send_message(content=None, embed=embed)
+                else:
+                    await interaction.followup.send(content=None, embed=embed)
             except Exception as e:
                 logger.error("Error handling /position command", exc_info=True)
-                await interaction.response.send_message(f"Failed to get positions: {e}")
+                if self.is_first_msg:
+                    self.is_first_msg = False
+                    await interaction.response.send_message(f"Error retrieving perp positions for {account['name']}: {e}")
+                else:
+                    await interaction.followup.send(f"Failed to get positions: {e}")
             finally:
                 # if client exists, close the connection
                 if 'client' in locals():
