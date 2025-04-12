@@ -3,7 +3,7 @@
 set -e
 set -o pipefail
 
-SCRIPT_NAME="run.sh prod"
+SCRIPT_NAME="python -m bot.bot"
 CONFIG_YML="config.yml"
 CONFIG_PY="bot/config.py"
 BOT_MODULE="bot.bot"
