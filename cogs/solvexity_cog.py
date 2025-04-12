@@ -12,7 +12,6 @@ class SolvexityDataCog(commands.Cog):
     def __init__(self, bot: commands.Bot, accounts: list):
         self.accounts = accounts
         self.bot = bot
-        self.is_first_msg = True
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -21,8 +20,7 @@ class SolvexityDataCog(commands.Cog):
     @app_commands.command(name="balance", description="Get all account balances")
     async def balance(self, interaction: discord.Interaction):
         """Responds with a balance"""
-        await interaction.response.defer()
-        self.is_first_msg = True
+        await interaction.response.defer()  # Ensure the interaction is deferred
         for account in self.accounts:
             try:
                 account_name = account['name']
@@ -59,22 +57,18 @@ class SolvexityDataCog(commands.Cog):
                             free = decimal.Decimal(0)
                         if locked.is_zero():
                             locked = decimal.Decimal(0)
+                        
                         usd_value = usd_value.quantize(decimal.Decimal('0.01'))
+                        if usd_value.is_zero():
+                            continue
                         embed.add_field(name=balance['asset'], value=f"Free: {free}, Locked: {locked}, USD Value: {usd_value}", inline=False)
                         total_usd_value += usd_value
                 embed.set_footer(text="Total USD Value: " + str(total_usd_value))
-                if self.is_first_msg:
-                    self.is_first_msg = False
-                    await interaction.response.send_message(content=None, embed=embed)
-                else:
-                    await interaction.followup.send(content=None, embed=embed)
+                await interaction.followup.send(content=None, embed=embed)  # Use followup.send for all responses
+
             except Exception as e:
                 logger.error(f"Error retrieving spot balance: {e}", exc_info=True)
-                if self.is_first_msg:
-                    self.is_first_msg = False
-                    await interaction.response.send_message(f"Error retrieving spot balance for {account['name']}: {e}")
-                else:
-                    await interaction.followup.send(f"Error retrieving spot balance for {account['name']}: {e}")         
+                await interaction.followup.send(f"Error retrieving spot balance for {account['name']}: {e}")
             finally:
                 # if client exists, close the connection
                 if 'client' in locals():
@@ -83,8 +77,7 @@ class SolvexityDataCog(commands.Cog):
     @app_commands.command(name="fbalance", description="Get futures account balances")
     async def fbalance(self, interaction: discord.Interaction):
         """Responds with a position"""
-        self.is_first_msg = True
-
+        await interaction.response.defer()
         for account in self.accounts:
             try:
                 account_name = account['name']
@@ -117,18 +110,10 @@ class SolvexityDataCog(commands.Cog):
                         if locked.is_zero():
                             locked = decimal.Decimal(0)
                         embed.add_field(name=asset, value=f"Free: {free}, Locked: {locked}", inline=False)
-                if self.is_first_msg:
-                    self.is_first_msg = False
-                    await interaction.response.send_message(content=None, embed=embed)
-                else:
-                    await interaction.followup.send(content=None, embed=embed)
+                await interaction.followup.send(content=None, embed=embed)
             except Exception as e:
                 logger.error("Error handling /position command", exc_info=True)
-                if self.is_first_msg:
-                    self.is_first_msg = False
-                    await interaction.response.send_message(f"Error retrieving perp balance for {account['name']}: {e}")
-                else:
-                    await interaction.followup.send(f"Failed to get positions: {e}")
+                await interaction.followup.send(f"Error retrieving perp balance for {account['name']}: {e}")
             finally:
                 # if client exists, close the connection
                 if 'client' in locals():
@@ -138,7 +123,7 @@ class SolvexityDataCog(commands.Cog):
     @app_commands.command(name="position", description="Get perp positions")
     async def position(self, interaction: discord.Interaction):
         """Responds with a position"""
-        self.is_first_msg = True
+        await interaction.response.defer()
         for account in self.accounts:
             try:
                 account_name = account['name']
@@ -159,18 +144,10 @@ class SolvexityDataCog(commands.Cog):
                         entry_price = decimal.Decimal(position['entryPrice'])
                         unrealized_profit = decimal.Decimal(position['unRealizedProfit']).quantize(decimal.Decimal('0.01'))
                         embed.add_field(name=symbol, value=f"Position: {amount}, Entry Px: {entry_price}, Unrealized: {unrealized_profit}", inline=False)
-                if self.is_first_msg:
-                    self.is_first_msg = False
-                    await interaction.response.send_message(content=None, embed=embed)
-                else:
-                    await interaction.followup.send(content=None, embed=embed)
+                await interaction.followup.send(content=None, embed=embed)
             except Exception as e:
                 logger.error("Error handling /position command", exc_info=True)
-                if self.is_first_msg:
-                    self.is_first_msg = False
-                    await interaction.response.send_message(f"Error retrieving perp positions for {account['name']}: {e}")
-                else:
-                    await interaction.followup.send(f"Failed to get positions: {e}")
+                await interaction.followup.send(f"Error retrieving perp positions for {account['name']}: {e}")
             finally:
                 # if client exists, close the connection
                 if 'client' in locals():
