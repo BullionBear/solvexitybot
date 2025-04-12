@@ -6,3 +6,6 @@ psycopg2-binary
 tabulate
 pyyaml
 pillow
+pandas
+matplotlib
+mplfinance

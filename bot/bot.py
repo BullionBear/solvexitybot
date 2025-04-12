@@ -21,9 +21,9 @@ bot = commands.Bot(command_prefix="|>", intents=intents)
 # Load extensions
 async def load():
     await bot.add_cog(cogs.ExampleCog(bot))
-    # Load Binance account details from config.yml
     await bot.add_cog(cogs.SolvexityDataCog(bot))
     await bot.add_cog(cogs.TradingCog(bot))
+    await bot.add_cog(cogs.AnalyticBot(bot))
 
 
 @bot.event
