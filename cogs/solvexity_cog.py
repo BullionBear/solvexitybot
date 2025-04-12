@@ -21,6 +21,7 @@ class SolvexityDataCog(commands.Cog):
     @app_commands.command(name="balance", description="Get all account balances")
     async def balance(self, interaction: discord.Interaction):
         """Responds with a balance"""
+        await interaction.response.defer()
         self.is_first_msg = True
         for account in self.accounts:
             try:
