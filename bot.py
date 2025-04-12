@@ -25,7 +25,7 @@ async def load():
     # Load Binance account details from config.yml
     with open("config.yml", "r") as file:
         config = yaml.safe_load(file)
-    accounts = {acc['name']: acc for acc in config['binance']}
+    accounts = config['binance']
     await bot.add_cog(cogs.SolvexityDataCog(bot, accounts))
     await bot.add_cog(cogs.TradingCog(bot, accounts))
 

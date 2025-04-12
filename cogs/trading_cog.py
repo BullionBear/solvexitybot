@@ -10,7 +10,7 @@ import textwrap
 logger = logging.getLogger(__name__)
 
 class TradingCog(commands.Cog):
-    def __init__(self, bot: commands.Bot, accounts: dict):
+    def __init__(self, bot: commands.Bot, accounts: list):
         self.bot = bot
         self.accounts = accounts
 
@@ -23,43 +23,47 @@ class TradingCog(commands.Cog):
     async def buy(self, interaction: discord.Interaction, account: str, symbol: str, quantity: str):
         """Buy a token/Long a position on Binance"""
         try:
-            if account not in self.accounts:
+            if account not in [acc['name'] for acc in self.accounts]:
                 await interaction.response.send_message(f"Account {account} not found")
                 return
-            api_key = self.accounts[account]['api_key']
-            api_secret = self.accounts[account]['api_secret']
+            account = [acc for acc in self.accounts if acc['name'] == account][0]
+            account_name = account['name']
+            api_key = account['api_key']
+            api_secret = account['api_secret']
             client = await AsyncClient.create(api_key, api_secret)
-            if self.accounts[account]['exchange'] == 'BINANCE':
-                res = await client.order_market_buy(symbol=symbol, quantity=quantity)
-                logger.info(f"Order result {res}")
-                description = textwrap.dedent(f"""\
-                    ID: {res['orderId']}
-                    Symbol: {res['symbol']}
-                    Side: {res['side']}
-                    Qty: {res['executedQty']}
-                    Average Price: {Decimal(res['cummulativeQuoteQty']) / Decimal(res['executedQty'])}
-                """)
-                embed = discord.Embed(
-                    title=f"SPOT {account} Buy",
-                    description=description,
-                    color=discord.Color.green()
-                )
-                await interaction.response.send_message(content=None, embed=embed)
+            res = await client.order_market_buy(symbol=symbol, quantity=quantity)
+            logger.info(f"Order result {res}")
+            description = textwrap.dedent(f"""\
+                ID: {res['orderId']}
+                Symbol: {res['symbol']}
+                Side: {res['side']}
+                Qty: {res['executedQty']}
+                Average Price: {Decimal(res['cummulativeQuoteQty']) / Decimal(res['executedQty'])}
+            """)
+            embed = discord.Embed(
+                title=f"SPOT {account_name} Buy",
+                description=description,
+                color=discord.Color.green()
+            )
+            await interaction.response.send_message(content=None, embed=embed)
         except Exception as e:
             await interaction.response.send_message(f"Error: {e}")
         finally:
-            await client.close_connection()
+            if 'client' in locals():
+                await client.close_connection()
     
     @app_commands.command(name="long", description="Long a position")
     @app_commands.default_permissions(administrator=True)
     async def long(self, interaction: discord.Interaction, account: str, symbol: str, quantity: str):
         """Long a position on Binance"""
         try:
-            if account not in self.accounts:
+            if account not in [acc['name'] for acc in self.accounts]:
                 await interaction.response.send_message(f"Account {account} not found")
                 return
-            api_key = self.accounts[account]['api_key']
-            api_secret = self.accounts[account]['api_secret']
+            account = [acc for acc in self.accounts if acc['name'] == account][0]
+            account_name = account['name']
+            api_key = account['api_key']
+            api_secret = account['api_secret']
             client = await AsyncClient.create(api_key, api_secret)
             order = await client.futures_create_order(symbol=symbol, side="BUY", type="MARKET", quantity=quantity)
             order_id = order['orderId']
@@ -73,7 +77,7 @@ class TradingCog(commands.Cog):
                 Average Price: {Decimal(res['avgPrice'])}
             """)
             embed = discord.Embed(
-                title=f"PERP {account} Long",
+                title=f"PERP {account_name} Long",
                 description=description,
                 color=discord.Color.green()
             )
@@ -81,53 +85,57 @@ class TradingCog(commands.Cog):
         except Exception as e:
             await interaction.response.send_message(f"Error: {e}")
         finally:
-            await client.close_connection()
+             # if client exists, close the connection
+            if 'client' in locals():
+                await client.close_connection()
 
     @app_commands.command(name="sell", description="Sell a token")
     @app_commands.default_permissions(administrator=True)
     async def sell(self, interaction: discord.Interaction, account: str, symbol: str, quantity: str):
         """Sell a token on Binance"""
         try:
-            if account not in self.accounts:
+            if account not in [acc['name'] for acc in self.accounts]:
                 await interaction.response.send_message(f"Account {account} not found")
                 return
-            api_key = self.accounts[account]['api_key']
-            api_secret = self.accounts[account]['api_secret']
+            account = [acc for acc in self.accounts if acc['name'] == account][0]
+            account_name = account['name']
+            api_key = account['api_key']
+            api_secret = account['api_secret']
             client = await AsyncClient.create(api_key, api_secret)
-            if self.accounts[account]['exchange'] == 'BINANCE':
-                res = await client.order_market_sell(symbol=symbol, quantity=quantity)
-                logger.info(f"Order result {res}")
-                average_price = str(Decimal(res['cummulativeQuoteQty']) / Decimal(res['executedQty'])).rstrip('0').rstrip('.')
-                description = textwrap.dedent(f"""\
-                    ID: {res['orderId']}
-                    Symbol: {res['symbol']}
-                    Side: {res['side']}
-                    Qty: {res['executedQty']}
-                    Average Price: {average_price}
-                """)
-                embed = discord.Embed(
-                    title=f"SPOT {account} Sell",
-                    description=description,
-                    color=discord.Color.green()
-                )
-                await interaction.response.send_message(content=None, embed=embed)
-            else:
-                await interaction.response.send_message(f"Unknown exchange {self.accounts[account]['exchange']}")
+            res = await client.order_market_sell(symbol=symbol, quantity=quantity)
+            logger.info(f"Order result {res}")
+            average_price = str(Decimal(res['cummulativeQuoteQty']) / Decimal(res['executedQty'])).rstrip('0').rstrip('.')
+            description = textwrap.dedent(f"""\
+                ID: {res['orderId']}
+                Symbol: {res['symbol']}
+                Side: {res['side']}
+                Qty: {res['executedQty']}
+                Average Price: {average_price}
+            """)
+            embed = discord.Embed(
+                title=f"SPOT {account_name} Sell",
+                description=description,
+                color=discord.Color.green()
+            )
+            await interaction.response.send_message(content=None, embed=embed)
         except Exception as e:
             await interaction.response.send_message(f"Error: {e}")
         finally:
-            await client.close_connection()
+            if 'client' in locals():
+                await client.close_connection()
 
     @app_commands.command(name="short", description="Short a position")
     @app_commands.default_permissions(administrator=True)
     async def short(self, interaction: discord.Interaction, account: str, symbol: str, quantity: str):
         """Short a position on Binance Futures"""
         try:
-            if account not in self.accounts:
+            if account not in [acc['name'] for acc in self.accounts]:
                 await interaction.response.send_message(f"Account {account} not found")
                 return
-            api_key = self.accounts[account]['api_key']
-            api_secret = self.accounts[account]['api_secret']
+            account = [acc for acc in self.accounts if acc['name'] == account][0]
+            account_name = account['name']
+            api_key = account['api_key']
+            api_secret = account['api_secret']
             client = await AsyncClient.create(api_key, api_secret)
             order = await client.futures_create_order(symbol=symbol, side="SELL", type="MARKET", quantity=quantity)
             order_id = order['orderId']
@@ -142,7 +150,7 @@ class TradingCog(commands.Cog):
                 Average Price: {average_price}
             """)
             embed = discord.Embed(
-                title=f"PERP {account} Short",
+                title=f"PERP {account_name} Short",
                 description=description,
                 color=discord.Color.green()
             )
@@ -150,4 +158,5 @@ class TradingCog(commands.Cog):
         except Exception as e:
             await interaction.response.send_message(f"Error: {e}")
         finally:
-            await client.close_connection()
+            if 'client' in locals():
+                await client.close_connection()
