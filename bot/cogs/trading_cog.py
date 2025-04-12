@@ -19,15 +19,15 @@ class TradingCog(commands.Cog):
         logger.info(f"TradingCog loaded")
 
     @app_commands.command(name="buy", description="Buy a token/Long a position")
-    @app_commands.choices(symbol=const.SPOT_CHOICES)
+    @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.SPOT_CHOICES)
     @app_commands.default_permissions(administrator=True)
-    async def buy(self, interaction: discord.Interaction, account: str, symbol: app_commands.Choice[str], quantity: str):
+    async def buy(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str):
         """Buy a token/Long a position on Binance"""
         try:
-            if account not in [acc['name'] for acc in self.accounts]:
-                await interaction.response.send_message(f"Account {account} not found")
+            if account.value not in [acc['name'] for acc in self.accounts]:
+                await interaction.response.send_message(f"Account {account.value} not found")
                 return
-            account = [acc for acc in self.accounts if acc['name'] == account][0]
+            account = [acc for acc in self.accounts if acc['name'] == account.value][0]
             account_name = account['name']
             api_key = account['api_key']
             api_secret = account['api_secret']
@@ -54,14 +54,15 @@ class TradingCog(commands.Cog):
                 await client.close_connection()
     
     @app_commands.command(name="long", description="Long a position")
+    @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.PERP_CHOICES)
     @app_commands.default_permissions(administrator=True)
-    async def long(self, interaction: discord.Interaction, account: str, symbol: str, quantity: str):
+    async def long(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str):
         """Long a position on Binance"""
         try:
-            if account not in [acc['name'] for acc in self.accounts]:
-                await interaction.response.send_message(f"Account {account} not found")
+            if account.value not in [acc['name'] for acc in self.accounts]:
+                await interaction.response.send_message(f"Account {account.value} not found")
                 return
-            account = [acc for acc in self.accounts if acc['name'] == account][0]
+            account = [acc for acc in self.accounts if acc['name'] == account.value][0]
             account_name = account['name']
             api_key = account['api_key']
             api_secret = account['api_secret']
@@ -91,19 +92,20 @@ class TradingCog(commands.Cog):
                 await client.close_connection()
 
     @app_commands.command(name="sell", description="Sell a token")
+    @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.SPOT_CHOICES)
     @app_commands.default_permissions(administrator=True)
-    async def sell(self, interaction: discord.Interaction, account: str, symbol: str, quantity: str):
+    async def sell(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str):
         """Sell a token on Binance"""
         try:
-            if account not in [acc['name'] for acc in self.accounts]:
-                await interaction.response.send_message(f"Account {account} not found")
+            if account.value not in [acc['name'] for acc in self.accounts]:
+                await interaction.response.send_message(f"Account {account.value} not found")
                 return
-            account = [acc for acc in self.accounts if acc['name'] == account][0]
+            account = [acc for acc in self.accounts if acc['name'] == account.value][0]
             account_name = account['name']
             api_key = account['api_key']
             api_secret = account['api_secret']
             client = await AsyncClient.create(api_key, api_secret)
-            res = await client.order_market_sell(symbol=symbol, quantity=quantity)
+            res = await client.order_market_sell(symbol=symbol.value, quantity=quantity)
             logger.info(f"Order result {res}")
             average_price = str(Decimal(res['cummulativeQuoteQty']) / Decimal(res['executedQty'])).rstrip('0').rstrip('.')
             description = textwrap.dedent(f"""\
@@ -126,21 +128,22 @@ class TradingCog(commands.Cog):
                 await client.close_connection()
 
     @app_commands.command(name="short", description="Short a position")
+    @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.PERP_CHOICES)
     @app_commands.default_permissions(administrator=True)
-    async def short(self, interaction: discord.Interaction, account: str, symbol: str, quantity: str):
+    async def short(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str):
         """Short a position on Binance Futures"""
         try:
-            if account not in [acc['name'] for acc in self.accounts]:
-                await interaction.response.send_message(f"Account {account} not found")
+            if account.value not in [acc['name'] for acc in self.accounts]:
+                await interaction.response.send_message(f"Account {account.value} not found")
                 return
-            account = [acc for acc in self.accounts if acc['name'] == account][0]
+            account = [acc for acc in self.accounts if acc['name'] == account.value][0]
             account_name = account['name']
             api_key = account['api_key']
             api_secret = account['api_secret']
             client = await AsyncClient.create(api_key, api_secret)
-            order = await client.futures_create_order(symbol=symbol, side="SELL", type="MARKET", quantity=quantity)
+            order = await client.futures_create_order(symbol=symbol.value, side="SELL", type="MARKET", quantity=quantity)
             order_id = order['orderId']
-            res = await client.futures_get_order(symbol=symbol, orderId=order_id)
+            res = await client.futures_get_order(symbol=symbol.value, orderId=order_id)
             logger.info(f"Order result {res}")
             average_price = str(Decimal(res['avgPrice'])).rstrip('0').rstrip('.')
             description = textwrap.dedent(f"""\
