@@ -77,3 +77,5 @@ class AnalyticBot(commands.Cog):
     @app_commands.choices(symbol=const.SPOT_CHOICES, interval=const.INTERVAL_CHOICES)
     async def fkline(self, interaction: discord.Interaction, symbol: app_commands.Choice[str], interval: app_commands.Choice[str], limit: int = 100):
         await self._fetch_and_plot_klines(interaction, symbol.value, interval.value, limit, is_futures=True)
+
+    
