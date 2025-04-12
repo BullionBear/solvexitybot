@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import logging
-import yaml
 from binance import AsyncClient
 from decimal import Decimal
 import textwrap
@@ -13,6 +12,7 @@ class TradingCog(commands.Cog):
     def __init__(self, bot: commands.Bot, accounts: list):
         self.bot = bot
         self.accounts = accounts
+
 
     @commands.Cog.listener()
     async def on_ready(self):
