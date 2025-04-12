@@ -5,22 +5,23 @@ import logging
 from binance import AsyncClient
 from decimal import Decimal
 import textwrap
+import bot.cogs.const as const
 
 logger = logging.getLogger(__name__)
 
 class TradingCog(commands.Cog):
-    def __init__(self, bot: commands.Bot, accounts: list):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.accounts = accounts
-
+        self.accounts = const.CONFIG['accounts']
 
     @commands.Cog.listener()
     async def on_ready(self):
         logger.info(f"TradingCog loaded")
 
     @app_commands.command(name="buy", description="Buy a token/Long a position")
+    @app_commands.choices(symbol=const.SPOT_CHOICES)
     @app_commands.default_permissions(administrator=True)
-    async def buy(self, interaction: discord.Interaction, account: str, symbol: str, quantity: str):
+    async def buy(self, interaction: discord.Interaction, account: str, symbol: app_commands.Choice[str], quantity: str):
         """Buy a token/Long a position on Binance"""
         try:
             if account not in [acc['name'] for acc in self.accounts]:

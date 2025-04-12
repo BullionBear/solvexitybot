@@ -5,7 +5,6 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import bot.cogs as cogs
-import yaml
 
 # Load environment variables
 load_dotenv()
@@ -23,12 +22,8 @@ bot = commands.Bot(command_prefix="|>", intents=intents)
 async def load():
     await bot.add_cog(cogs.ExampleCog(bot))
     # Load Binance account details from config.yml
-    with open("config.yml", "r") as file:
-        config = yaml.safe_load(file)
-    accounts = config['accounts']
-    symbols = config['symbols']
-    await bot.add_cog(cogs.SolvexityDataCog(bot, accounts))
-    await bot.add_cog(cogs.TradingCog(bot, accounts))
+    await bot.add_cog(cogs.SolvexityDataCog(bot))
+    await bot.add_cog(cogs.TradingCog(bot))
 
 
 @bot.event

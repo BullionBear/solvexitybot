@@ -5,6 +5,7 @@ from binance import AsyncClient
 from utils import symbol_filter
 import decimal
 import logging
+import bot.cogs.const as const
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +34,8 @@ class BinanceService:
         return await self.client.futures_position_information()
 
 class SolvexityDataCog(commands.Cog):
-    def __init__(self, bot: commands.Bot, accounts: list):
-        self.accounts = accounts
+    def __init__(self, bot: commands.Bot):
+        self.accounts = const.CONFIG['accounts']
         self.bot = bot
 
     @commands.Cog.listener()
