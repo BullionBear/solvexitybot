@@ -1,7 +1,18 @@
-binance:
-  - name: "account 1"
-    api_key: "your_api_key"
-    api_secret: "your_api_secret"
-  - name: "account 2"
-    api_key: "your_api_key"
-    api_secret: "your_api_secret"
+accounts:
+  - name: "account1"
+    api_key: "your_api_key_here"
+    api_secret: "your_api_secret_here"
+  - name: "account2"
+    api_key: "your_api_key_here"
+    api_secret: "your_api_secret_here"
+
+symbols:
+  spot:
+    - symbol: "BTCUSDT"
+    - symbol: "ETHUSDT"
+    - symbol: "USDDUSDT"
+  perp:
+    - symbol: "BTCUSDT"
+    - symbol: "ETHUSDT"
+
+
