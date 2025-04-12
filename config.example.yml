@@ -1,0 +1,7 @@
+binance:
+  - name: "account 1"
+    api_key: "your_api_key"
+    api_secret: "your_api_secret"
+  - name: "account 2"
+    api_key: "your_api_key"
+    api_secret: "your_api_secret"
