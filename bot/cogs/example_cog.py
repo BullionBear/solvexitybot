@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+from io import BytesIO
+from PIL import Image, ImageDraw
 import logging
 
 logger = logging.getLogger(__name__)
@@ -45,5 +47,23 @@ class ExampleCog(commands.Cog):
     async def auto(self, interaction: discord.Interaction, color: str):
         """Autocomplete a command"""
         await interaction.response.send_message(f"You input: {color}")
+
+
+    @app_commands.command(name="image", description="Send a static image")
+    async def image(self, interaction: discord.Interaction):
+        """Send a static image created with Pillow"""
+        # Create a static image
+        img = Image.new("RGB", (400, 200), color=(100, 150, 200))
+        draw = ImageDraw.Draw(img)
+        draw.rectangle((50, 50, 350, 150), fill=(255, 255, 255), outline=(0, 0, 0))
+        draw.text((120, 90), "Static Image", fill=(0, 0, 0))
+
+        # Save the image to a BytesIO object
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        # Send the image as a Discord file
+        await interaction.response.send_message("Here is a static image!", file=discord.File(fp=buffer, filename="static_image.png"))
 
 
