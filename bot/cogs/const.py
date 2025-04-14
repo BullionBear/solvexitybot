@@ -25,3 +25,13 @@ INTERVAL_CHOICES = [
         "12h", "1d", "3d", "1w"
     ]
 ]
+
+SIDE_CHOICES = [
+    app_commands.Choice(name="BUY", value="BUY"),
+    app_commands.Choice(name="SELL", value="SELL")
+]
+
+INSTRUMENT_TYPE_CHOICES = [
+    app_commands.Choice(name="SPOT", value="SPOT"),
+    app_commands.Choice(name="PERP", value="PERP")
+]
