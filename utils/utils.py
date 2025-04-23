@@ -6,7 +6,9 @@ from cachetools import cached, TTLCache
 cache_symbolinfo = TTLCache(maxsize=128, ttl=86400)
 
 cache_exchange_info = TTLCache(maxsize=2, ttl=86400)
-@cached(maxsize=2)
+
+
+@cached(cache_symbolinfo)
 def _get_exchange_info(is_futures=False):
     client = BinanceClient()
     if is_futures:
@@ -15,7 +17,7 @@ def _get_exchange_info(is_futures=False):
         exchange_info = client.get_exchange_info()
     return exchange_info
 
-@cached(maxsize=128)  # Set the cache size to 128 entries (or adjust as needed)
+@cached(cache_exchange_info)  # Set the cache size to 128 entries (or adjust as needed)
 def _get_symbol_info(symbol, is_futures=False):
     client = BinanceClient()
     if is_futures:
