@@ -87,7 +87,7 @@ class SolvexityDataCog(commands.Cog):
                         free = decimal.Decimal(balance['free'])
                         free, px = symbol_filter(symbol, free, px)
                         locked = decimal.Decimal(balance['locked'])
-                        locked, _ = symbol_filter(symbol, locked, _)
+                        locked, _ = symbol_filter(symbol, locked, px)
                         amount = free + locked                            
                     else:
                         logger.warning(f"Symbol {symbol} not valid")
