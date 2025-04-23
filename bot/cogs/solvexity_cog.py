@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from binance import AsyncClient
-from utils import symbol_filter
+from utils import symbol_filter, is_symbol_valid
 import decimal
 import logging
 import bot.cogs.const as const
@@ -82,13 +82,17 @@ class SolvexityDataCog(commands.Cog):
                         amount = free + locked
                     else:
                         symbol = balance['asset'] + 'USDT'
-                        ticker = await service.client.get_symbol_ticker(symbol=symbol)
-                        px = decimal.Decimal(ticker['price'])
                         free = decimal.Decimal(balance['free'])
                         free, px = symbol_filter(symbol, free, px)
                         locked = decimal.Decimal(balance['locked'])
                         locked, px = symbol_filter(symbol, locked, px)
                         amount = free + locked
+                        if is_symbol_valid(symbol):
+                            ticker = await service.client.get_symbol_ticker(symbol=symbol)
+                            px = decimal.Decimal(ticker['price'])
+                            
+                        else:
+                            px = decimal.Decimal(0)
 
                     usd_value = amount * px
                     usd_value = usd_value.quantize(decimal.Decimal('0.01'))

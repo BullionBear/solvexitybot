@@ -1,12 +1,25 @@
 from decimal import Decimal, ROUND_DOWN
 from binance.client import Client as BinanceClient
-from functools import lru_cache
+from cachetools import cached, TTLCache
 
-@lru_cache(maxsize=128)  # Set the cache size to 128 entries (or adjust as needed)
+# Create a TTL cache
+cache_symbolinfo = TTLCache(maxsize=128, ttl=86400)
+
+cache_exchange_info = TTLCache(maxsize=2, ttl=86400)
+@cached(maxsize=2)
+def _get_exchange_info(is_futures=False):
+    client = BinanceClient()
+    if is_futures:
+        exchange_info = client.futures_exchange_info()
+    else:
+        exchange_info = client.get_exchange_info()
+    return exchange_info
+
+@cached(maxsize=128)  # Set the cache size to 128 entries (or adjust as needed)
 def _get_symbol_info(symbol, is_futures=False):
     client = BinanceClient()
     if is_futures:
-        symbol_info = client.futures_exchange_info()
+        symbol_info = _get_exchange_info(is_futures)
         for s in symbol_info['symbols']:
             if s['symbol'] == symbol:
                 return s
@@ -24,3 +37,7 @@ def symbol_filter(symbol: str, size: Decimal, price: Decimal, is_futures: bool=F
             lot_size = Decimal(_filter['stepSize']).normalize()
             size = size.quantize(lot_size, rounding=ROUND_DOWN)
     return size, price
+
+def is_symbol_valid(symbol: str, is_futures: bool=False) -> bool:
+    exchange_info = _get_exchange_info(is_futures)
+    return symbol in exchange_info['symbols']
