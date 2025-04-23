@@ -75,25 +75,24 @@ class SolvexityDataCog(commands.Cog):
 
             for balance in balances:
                 if float(balance['free']) > 0 or float(balance['locked']) > 0:
+                    symbol = balance['asset'] + 'USDT'
                     if balance['asset'] in ['USDT', 'USDC']:
                         px = decimal.Decimal(1)
                         free = decimal.Decimal(balance['free']).quantize(decimal.Decimal('0.01'))
                         locked = decimal.Decimal(balance['locked']).quantize(decimal.Decimal('0.01'))
                         amount = free + locked
-                    else:
-                        symbol = balance['asset'] + 'USDT'
+                    elif is_symbol_valid(symbol):
+                        ticker = await service.client.get_symbol_ticker(symbol=symbol)
+                        px = decimal.Decimal(ticker['price'])
                         free = decimal.Decimal(balance['free'])
                         free, px = symbol_filter(symbol, free, px)
                         locked = decimal.Decimal(balance['locked'])
-                        locked, px = symbol_filter(symbol, locked, px)
-                        amount = free + locked
-                        if is_symbol_valid(symbol):
-                            ticker = await service.client.get_symbol_ticker(symbol=symbol)
-                            px = decimal.Decimal(ticker['price'])
-                            
-                        else:
-                            px = decimal.Decimal(0)
-
+                        locked, _ = symbol_filter(symbol, locked, _)
+                        amount = free + locked                            
+                    else:
+                        logger.warning(f"Symbol {symbol} not valid")
+                        continue
+                        
                     usd_value = amount * px
                     usd_value = usd_value.quantize(decimal.Decimal('0.01'))
                     if usd_value.is_zero():
