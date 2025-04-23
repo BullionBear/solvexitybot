@@ -42,4 +42,7 @@ def symbol_filter(symbol: str, size: Decimal, price: Decimal, is_futures: bool=F
 
 def is_symbol_valid(symbol: str, is_futures: bool=False) -> bool:
     exchange_info = _get_exchange_info(is_futures)
-    return symbol in exchange_info['symbols']
+    for s in exchange_info['symbols']:
+        if s['symbol'] == symbol:
+            return True
+    return False
