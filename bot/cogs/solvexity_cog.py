@@ -39,29 +39,6 @@ class BinanceService:
     async def get_futures_open_orders(self):
         return await self.client.futures_get_open_orders()
     
-    async def cancel_spot_order(self, order_id: str):
-        try:
-            open_orders = await self.client.get_open_orders()
-            for order in open_orders:
-                if order['orderId'] == order_id:
-                    result = await self.client.cancel_order(symbol=order['symbol'], orderId=order_id)
-                    return result
-            return {"error": "Order not found"} 
-        except Exception as e:
-            logger.error(f"Error cancelling order {order_id}: {e}", exc_info=True)
-            raise
-
-    async def cancel_futures_order(self, order_id: str):
-        try:
-            open_orders = await self.client.futures_get_open_orders()
-            for order in open_orders:
-                if order['orderId'] == order_id:
-                    result = await self.client.futures_cancel_order(symbol=order['symbol'], orderId=order_id)
-                    return result
-            return {"error": "Order not found"} 
-        except Exception as e:
-            logger.error(f"Error cancelling futures order {order_id}: {e}", exc_info=True)
-            raise
 
 class SolvexityDataCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -262,24 +239,3 @@ class SolvexityDataCog(commands.Cog):
             await self._handle_account(interaction, account, handle_fopen)
 
     
-    @app_commands.command(name="cancel", description="Cancel open order")
-    async def cancel(self, interaction: discord.Interaction, order_id: str):
-        await interaction.response.defer()
-
-        async def handle_cancel(service: BinanceService, account_name: str):
-            try:
-                result = await service.client.cancel_order(symbol=order_id)
-                embed = discord.Embed(
-                    title=f"{account_name} Cancel Order",
-                    color=discord.Color.random()
-                )
-                embed.add_field(name="Order ID", value=result['orderId'], inline=False)
-                embed.add_field(name="Symbol", value=result['symbol'], inline=False)
-                embed.add_field(name="Status", value=result['status'], inline=False)
-                return embed
-            except Exception as e:
-                logger.error(f"Error cancelling order {order_id}: {e}", exc_info=True)
-                await interaction.followup.send(f"Error cancelling order {order_id}: {e}")
-
-        for account in self.accounts:
-            await self._handle_account(interaction, account, handle_cancel)
