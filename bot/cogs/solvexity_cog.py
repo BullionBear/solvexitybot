@@ -32,6 +32,12 @@ class BinanceService:
 
     async def get_futures_positions(self):
         return await self.client.futures_position_information()
+    
+    async def get_spot_open_orders(self):
+        return await self.client.get_open_orders()
+    
+    async def get_futures_open_orders(self):
+        return await self.client.futures_get_open_orders()
 
 class SolvexityDataCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -165,3 +171,55 @@ class SolvexityDataCog(commands.Cog):
         for account in self.accounts:
             await self._handle_account(interaction, account, handle_position)
 
+    @app_commands.command(name="open", description="Get open orders")
+    async def open(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+
+        async def handle_open(service: BinanceService, account_name: str):
+            open_orders = await service.get_spot_open_orders()
+            embed = discord.Embed(
+                title=f"{account_name} Open Orders",
+                color=discord.Color.random()
+            )
+
+            logger.info(f"Open orders: {open_orders}")
+
+            for order in open_orders:
+                symbol = order['symbol']
+                order_id = order['orderId']
+                price = decimal.Decimal(order['price'])
+                qty = decimal.Decimal(order['origQty'])
+                side = order['side']
+                status = order['status']
+                embed.add_field(name=f"Order ID: {order_id}", value=f"Symbol: {symbol}, Side: {side}, Price: {price}, Qty: {qty}, Status: {status}", inline=False)
+
+            return embed
+
+        for account in self.accounts:
+            await self._handle_account(interaction, account, handle_open)
+
+    @app_commands.command(name="fopen", description="Get open perp orders")
+    async def fopen(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+
+        async def handle_fopen(service: BinanceService, account_name: str):
+            open_orders = await service.get_futures_open_orders()
+            embed = discord.Embed(
+                title=f"{account_name} Perp Open Orders",
+                color=discord.Color.random()
+            )
+
+            logger.info(f"fOpen orders: {open_orders}")
+
+            for order in open_orders:
+                symbol = order['symbol']
+                side = order['side']
+                price = decimal.Decimal(order['price'])
+                qty = decimal.Decimal(order['origQty'])
+                status = order['status']
+                embed.add_field(name=symbol, value=f"Side: {side}, Price: {price}, Qty: {qty}, Status: {status}", inline=False)
+
+            return embed
+
+        for account in self.accounts:
+            await self._handle_account(interaction, account, handle_fopen)
