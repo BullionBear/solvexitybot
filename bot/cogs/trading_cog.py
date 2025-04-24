@@ -146,13 +146,13 @@ class TradingCog(commands.Cog):
     async def short(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str):
         await self.process_order(interaction, account, symbol, quantity, "SELL", "FUTURES")
 
-    @app_commands.command(name="cancel", description="Cancel all orders")
+    @app_commands.command(name="close", description="Cancel all orders")
     @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.SPOT_CHOICES)
     @app_commands.default_permissions(administrator=True)
     async def cancel(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str]):
         await self.cancel_order(interaction, account, symbol, "SPOT")
 
-    @app_commands.command(name="fcancel", description="Cancel all future orders")
+    @app_commands.command(name="fclose", description="Cancel all future orders")
     @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.PERP_CHOICES)
     @app_commands.default_permissions(administrator=True)
     async def fcancel(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str]):
