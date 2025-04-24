@@ -25,16 +25,22 @@ class BinanceClientFactory:
 
 class OrderExecutor:
     def __init__(self, client):
-        self.client = client
+        self.client: AsyncClient = client
 
     async def execute_spot_order(self, symbol, quantity, side):
         if side == "BUY":
             return await self.client.order_market_buy(symbol=symbol, quantity=quantity)
         elif side == "SELL":
             return await self.client.order_market_sell(symbol=symbol, quantity=quantity)
+    
+    async def cancel_all_spot_order(self, symbol):
+        return await self.client.cancel_all_open_orders(symbol=symbol)
 
     async def execute_futures_order(self, symbol, quantity, side):
         return await self.client.futures_create_order(symbol=symbol, side=side, type="MARKET", quantity=quantity)
+    
+    async def cancel_all_futures_order(self, symbol):
+        return await self.client.futures_cancel_all_open_orders(symbol=symbol)
 
 class TradingCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -86,6 +92,36 @@ class TradingCog(commands.Cog):
         finally:
             await client.close_connection()
 
+    async def cancel_order(self, interaction, account, symbol, order_type):
+        account_data = self.account_validator.validate_account(account.value)
+        if not account_data:
+            await interaction.response.send_message(f"Account {account.value} not found")
+            return
+
+        api_key = account_data['api_key']
+        api_secret = account_data['api_secret']
+        client = await BinanceClientFactory.create_client(api_key, api_secret)
+
+        try:
+            executor = OrderExecutor(client)
+            if order_type == "SPOT":
+                res = await executor.cancel_all_spot_order(symbol.value)
+            elif order_type == "FUTURES":
+                res = await executor.cancel_all_futures_order(symbol.value)
+
+            logger.info(f"Cancel result {res}")
+            embed = discord.Embed(
+                title=f"{order_type} {account_data['name']} Cancel",
+                description=f"Cancelled all orders for {symbol.value}",
+                color=discord.Color.red()
+            )
+            await interaction.response.send_message(content=None, embed=embed)
+        except Exception as e:
+            await interaction.response.send_message(f"Error: {e}")
+        finally:
+            await client.close_connection()
+
+
     @app_commands.command(name="buy", description="Buy a token/Long a position")
     @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.SPOT_CHOICES)
     @app_commands.default_permissions(administrator=True)
@@ -109,3 +145,15 @@ class TradingCog(commands.Cog):
     @app_commands.default_permissions(administrator=True)
     async def short(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str):
         await self.process_order(interaction, account, symbol, quantity, "SELL", "FUTURES")
+
+    @app_commands.command(name="cancel", description="Cancel all orders")
+    @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.SPOT_CHOICES)
+    @app_commands.default_permissions(administrator=True)
+    async def cancel(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str]):
+        await self.cancel_order(interaction, account, symbol, "SPOT")
+
+    @app_commands.command(name="fcancel", description="Cancel all future orders")
+    @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.PERP_CHOICES)
+    @app_commands.default_permissions(administrator=True)
+    async def fcancel(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str]):
+        await self.cancel_order(interaction, account, symbol, "FUTURES")
