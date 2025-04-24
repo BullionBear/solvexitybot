@@ -212,13 +212,19 @@ class SolvexityDataCog(commands.Cog):
             logger.info(f"fOpen orders: {open_orders}")
 
             for order in open_orders:
+                order_id = order['orderId']
                 symbol = order['symbol']
                 side = order['side']
-                price = decimal.Decimal(order['price'])
+                tp = order['type']
                 qty = decimal.Decimal(order['origQty'])
-                status = order['status']
-                embed.add_field(name=symbol, value=f"Side: {side}, Price: {price}, Qty: {qty}, Status: {status}", inline=False)
-
+                if tp == 'LIMIT':
+                    price = decimal.Decimal(order['price'])
+                    embed.add_field(name=order_id, value=f"Symbol: {symbol}, Side: {side}, Price: {price}, Qty: {qty}", inline=False)
+                elif tp in ['STOP_MARKET', 'TAKE_PROFIT_MARKET']:
+                    price = decimal.Decimal(order['stopPrice'])
+                    embed.add_field(name=order_id, value=f"Symbol: {symbol}, Side: {side}, Stop Price: {price}, Qty: {qty}", inline=False)
+                else:
+                    embed.add_field(name=order_id, value=f"Symbol: {symbol}, Side: {side}, Type: {tp}(Undefined), Qty: {qty}", inline=False)
             return embed
 
         for account in self.accounts:
