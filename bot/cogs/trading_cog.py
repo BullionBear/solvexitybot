@@ -40,8 +40,11 @@ class OrderExecutor:
     async def cancel_all_spot_order(self, symbol):
         return await self.client.cancel_all_open_orders(symbol=symbol)
 
-    async def execute_futures_order(self, symbol, side, quantity):
-        return await self.client.futures_create_order(symbol=symbol, side=side, type="MARKET", quantity=quantity)
+    async def execute_futures_order(self, symbol, side, quantity, price):
+        if price == "*":
+            return await self.client.futures_create_order(symbol=symbol, side=side, type="MARKET", quantity=quantity)
+        elif price != "*":
+            return await self.client.futures_create_order(symbol=symbol, side=side, type="LIMIT", quantity=quantity, price=price)
     
     async def cancel_all_futures_order(self, symbol):
         return await self.client.futures_cancel_all_open_orders(symbol=symbol)
