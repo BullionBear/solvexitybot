@@ -27,11 +27,15 @@ class OrderExecutor:
     def __init__(self, client):
         self.client: AsyncClient = client
 
-    async def execute_spot_order(self, symbol, side, quantity):
-        if side == "BUY":
+    async def execute_spot_order(self, symbol, side, quantity, price):
+        if side == "BUY" and price == "*":
             return await self.client.order_market_buy(symbol=symbol, quantity=quantity)
-        elif side == "SELL":
+        elif side == "SELL" and price == "*":
             return await self.client.order_market_sell(symbol=symbol, quantity=quantity)
+        elif side == "BUY" and price != "*":
+            return await self.client.order_limit_buy(symbol=symbol, quantity=quantity, price=price)
+        elif side == "SELL" and price != "*":
+            return await self.client.order_limit_sell(symbol=symbol, quantity=quantity, price=price)
     
     async def cancel_all_spot_order(self, symbol):
         return await self.client.cancel_all_open_orders(symbol=symbol)
