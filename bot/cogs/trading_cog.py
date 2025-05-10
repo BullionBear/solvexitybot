@@ -46,6 +46,9 @@ class OrderExecutor:
         elif price != "*":
             return await self.client.futures_create_order(symbol=symbol, side=side, type="LIMIT", quantity=quantity, price=price, timeInForce="GTC")
     
+    async def execute_futures_stop_order(self, symbol, side, quantity, stop_price):
+        return await self.client.futures_create_order(symbol=symbol, side=side, type="STOP_MARKET", quantity=quantity, stopPrice=stop_price, timeInForce="GTC")
+    
     async def cancel_all_futures_order(self, symbol):
         return await self.client.futures_cancel_all_open_orders(symbol=symbol)
 
@@ -58,6 +61,31 @@ class TradingCog(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         logger.info(f"TradingCog loaded")
+
+    async def process_stop_order(self, interaction, account, symbol, side, quantity, stop_price):
+        account_data = self.account_validator.validate_account(account.value)
+        if not account_data:
+            await interaction.response.send_message(f"Account {account.value} not found")
+            return
+
+        api_key = account_data['api_key']
+        api_secret = account_data['api_secret']
+        client = await BinanceClientFactory.create_client(api_key, api_secret)
+
+        try:
+            executor = OrderExecutor(client)
+            res = await executor.execute_futures_order(symbol.value, side, quantity, stop_price)
+            logger.info(f"Order result {res}")
+            embed = discord.Embed(
+                title=f"{account_data['name']} {side}",
+                description=f"Stop loss order placed for {symbol.value}",
+                color=discord.Color.green()
+            )
+            await interaction.response.send_message(content=None, embed=embed)
+        except Exception as e:
+            await interaction.response.send_message(f"Error: {e}")
+        finally:
+            await client.close_connection()
 
     async def process_order(self, interaction, account, symbol, side, quantity, price, order_type):
         account_data = self.account_validator.validate_account(account.value)
@@ -152,6 +180,18 @@ class TradingCog(commands.Cog):
     @app_commands.default_permissions(administrator=True)
     async def short(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str, price: str = "*"):
         await self.process_order(interaction, account, symbol, "SELL", quantity, price, "FUTURES")
+
+    @app_commands.command(name="stopshort", description="short a stop position")
+    @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.PERP_CHOICES)
+    @app_commands.default_permissions(administrator=True)
+    async def stop(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str, stop_price: str):
+        await self.process_stop_order(interaction, account, symbol, "SELL", quantity, stop_price)
+    
+    @app_commands.command(name="stoplong", description="long a stop position")
+    @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.PERP_CHOICES)
+    @app_commands.default_permissions(administrator=True)
+    async def stoplong(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str, stop_price: str):
+        await self.process_stop_order(interaction, account, symbol, "BUY", quantity, stop_price)
 
     @app_commands.command(name="close", description="Cancel all orders")
     @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.SPOT_CHOICES)
