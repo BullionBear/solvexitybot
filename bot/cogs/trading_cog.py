@@ -142,7 +142,7 @@ class TradingCog(commands.Cog):
     @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.PERP_CHOICES)
     @app_commands.default_permissions(administrator=True)
     async def long(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str, price: str = "*"):
-        await self.process_order(interaction, account, "BUY", symbol, quantity, price, "FUTURES")
+        await self.process_order(interaction, account, symbol, "BUY", quantity, price, "FUTURES")
 
     @app_commands.command(name="short", description="Short a position")
     @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.PERP_CHOICES)
