@@ -130,13 +130,13 @@ class TradingCog(commands.Cog):
     @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.SPOT_CHOICES)
     @app_commands.default_permissions(administrator=True)
     async def buy(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str, price: str = "*"):
-        await self.process_order(interaction, account, "BUY", symbol, quantity, price, "SPOT")
+        await self.process_order(interaction, account, symbol, "BUY" , quantity, price, "SPOT")
 
     @app_commands.command(name="sell", description="Sell a token")
     @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.SPOT_CHOICES)
     @app_commands.default_permissions(administrator=True)
     async def sell(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str, price: str = "*"):
-        await self.process_order(interaction, account, "SELL", symbol, quantity, price,  "SPOT")
+        await self.process_order(interaction, account, symbol, "SELL", quantity, price,  "SPOT")
 
     @app_commands.command(name="long", description="Long a position")
     @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.PERP_CHOICES)
@@ -148,7 +148,7 @@ class TradingCog(commands.Cog):
     @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.PERP_CHOICES)
     @app_commands.default_permissions(administrator=True)
     async def short(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str, price: str = "*"):
-        await self.process_order(interaction, account, "SELL", symbol, quantity, price, "FUTURES")
+        await self.process_order(interaction, account, symbol, "SELL", quantity, price, "FUTURES")
 
     @app_commands.command(name="close", description="Cancel all orders")
     @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.SPOT_CHOICES)
