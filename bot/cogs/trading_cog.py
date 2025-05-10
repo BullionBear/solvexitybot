@@ -52,7 +52,7 @@ class TradingCog(commands.Cog):
     async def on_ready(self):
         logger.info(f"TradingCog loaded")
 
-    async def process_order(self, interaction, account, symbol, side, quantity, order_type):
+    async def process_order(self, interaction, account, symbol, side, quantity, price, order_type):
         account_data = self.account_validator.validate_account(account.value)
         if not account_data:
             await interaction.response.send_message(f"Account {account.value} not found")
@@ -65,11 +65,11 @@ class TradingCog(commands.Cog):
         try:
             executor = OrderExecutor(client)
             if order_type == "SPOT":
-                res = await executor.execute_spot_order(symbol.value, quantity, side)
+                res = await executor.execute_spot_order(symbol.value, side ,quantity, price)
                 average_px = Decimal(res['cummulativeQuoteQty']) / Decimal(res['executedQty'])
                 qty = Decimal(res['executedQty'])
             elif order_type == "FUTURES":
-                res = await executor.execute_futures_order(symbol.value, quantity, side)
+                res = await executor.execute_futures_order(symbol.value, side, quantity, price)
                 average_px = Decimal(res['avgPrice'])
                 qty = Decimal(res['origQty'])
 
@@ -125,26 +125,26 @@ class TradingCog(commands.Cog):
     @app_commands.command(name="buy", description="Buy a token/Long a position")
     @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.SPOT_CHOICES)
     @app_commands.default_permissions(administrator=True)
-    async def buy(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str):
-        await self.process_order(interaction, account, "BUY", symbol, quantity, "SPOT")
+    async def buy(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str, price: str = "*"):
+        await self.process_order(interaction, account, "BUY", symbol, quantity, price, "SPOT")
 
     @app_commands.command(name="sell", description="Sell a token")
     @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.SPOT_CHOICES)
     @app_commands.default_permissions(administrator=True)
-    async def sell(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str):
-        await self.process_order(interaction, account, "SELL", symbol, quantity,  "SPOT")
+    async def sell(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str, price: str = "*"):
+        await self.process_order(interaction, account, "SELL", symbol, quantity, price,  "SPOT")
 
     @app_commands.command(name="long", description="Long a position")
     @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.PERP_CHOICES)
     @app_commands.default_permissions(administrator=True)
-    async def long(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str):
-        await self.process_order(interaction, account, "BUY", symbol, quantity, "FUTURES")
+    async def long(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str, price: str = "*"):
+        await self.process_order(interaction, account, "BUY", symbol, quantity, price, "FUTURES")
 
     @app_commands.command(name="short", description="Short a position")
     @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.PERP_CHOICES)
     @app_commands.default_permissions(administrator=True)
-    async def short(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str):
-        await self.process_order(interaction, account, "SELL", symbol, quantity, "FUTURES")
+    async def short(self, interaction: discord.Interaction, account: app_commands.Choice[str], symbol: app_commands.Choice[str], quantity: str, price: str = "*"):
+        await self.process_order(interaction, account, "SELL", symbol, quantity, price, "FUTURES")
 
     @app_commands.command(name="close", description="Cancel all orders")
     @app_commands.choices(account=const.ACCOUNT_CHOICES, symbol=const.SPOT_CHOICES)
