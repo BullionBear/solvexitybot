@@ -74,7 +74,7 @@ class TradingCog(commands.Cog):
 
         try:
             executor = OrderExecutor(client)
-            res = await executor.execute_futures_order(symbol.value, side, quantity, stop_price)
+            res = await executor.execute_futures_stop_order(symbol.value, side, quantity, stop_price)
             logger.info(f"Order result {res}")
             embed = discord.Embed(
                 title=f"{account_data['name']} {side}",
