@@ -10,7 +10,7 @@ symbols:
   spot:
     - symbol: "BTCUSDT"
     - symbol: "ETHUSDT"
-    - symbol: "USDDUSDT"
+    - symbol: "USDCUSDT"
   perp:
     - symbol: "BTCUSDT"
     - symbol: "ETHUSDT"
